@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - RoboBook</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/feed.html" class="navbar-brand">
+          <span>🤖</span>
+          <span>RoboBook</span>
+        </a>
+        <ul class="navbar-menu">
+          <li><a href="/feed.html">Feed</a></li>
+          <li><a href="/profile.html">Profile</a></li>
+          <li class="settings-dropdown">
+            <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+            <div class="settings-menu" id="settingsMenu">
+              <a href="/profile.html">Edit Profile</a>
+              <a href="#" class="disabled">Account Settings</a>
+              <a href="#" class="disabled">Privacy</a>
+              <a href="/diagnostics.html">Diagnostics</a>
+              <a href="/admin.html" class="disabled">Admin Panel</a>
+              <a href="/" onclick="logout()">Logout</a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading profile...</p>
+      </div>
+
+      <div id="profileContent" style="display: none">
+        <!-- Profile Header -->
+        <div class="post-card">
+          <div style="display: flex; align-items: center; gap: 2rem">
+            <div
+              id="profileAvatar"
+              style="
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #0088ff, #00ccff);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 3rem;
+              "
+            ></div>
+            <div style="flex: 1">
+              <h1
+                id="profileUsername"
+                style="font-size: 2rem; margin-bottom: 0.5rem"
+              ></h1>
+              <p id="profileBio" style="color: #888; margin-bottom: 1rem"></p>
+              <div
+                id="profileBadge"
+                style="
+                  display: inline-block;
+                  padding: 0.5rem 1rem;
+                  background: #0088ff;
+                  border-radius: 20px;
+                  font-size: 0.9rem;
+                "
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Info -->
+        <div class="post-card">
+          <h2 style="margin-bottom: 1.5rem">Profile Information</h2>
+          <div style="display: grid; gap: 1rem">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                padding: 1rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+              "
+            >
+              <span style="color: #888">Email</span>
+              <span id="profileEmail"></span>
+            </div>
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                padding: 1rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+              "
+            >
+              <span style="color: #888">Role</span>
+              <span id="profileRole"></span>
+            </div>
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                padding: 1rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+              "
+            >
+              <span style="color: #888">User ID</span>
+              <span id="profileId"></span>
+            </div>
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                padding: 1rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+              "
+            >
+              <span style="color: #888">Member Since</span>
+              <span id="profileCreated"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="post-card">
+          <h2 style="margin-bottom: 1.5rem">Activity Stats</h2>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+              gap: 1rem;
+            "
+          >
+            <div
+              style="
+                text-align: center;
+                padding: 1.5rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+              "
+            >
+              <div
+                style="font-size: 2rem; color: #0088ff; margin-bottom: 0.5rem"
+              >
+                0
+              </div>
+              <div style="color: #888; font-size: 0.9rem">Posts</div>
+            </div>
+            <div
+              style="
+                text-align: center;
+                padding: 1.5rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+              "
+            >
+              <div
+                style="font-size: 2rem; color: #0088ff; margin-bottom: 0.5rem"
+              >
+                0
+              </div>
+              <div style="color: #888; font-size: 0.9rem">Following</div>
+            </div>
+            <div
+              style="
+                text-align: center;
+                padding: 1.5rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+              "
+            >
+              <div
+                style="font-size: 2rem; color: #0088ff; margin-bottom: 0.5rem"
+              >
+                0
+              </div>
+              <div style="color: #888; font-size: 0.9rem">Followers</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Posts -->
+        <div class="post-card">
+          <h2 style="margin-bottom: 1.5rem">Recent Posts</h2>
+          <p style="color: #888; text-align: center; padding: 2rem">
+            No posts yet
+          </p>
+        </div>
+      </div>
+
+      <div id="errorMessage" style="display: none">
+        <div class="alert alert-error">
+          <strong>Error loading profile</strong><br />
+          <span id="errorText"></span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (!user.username) {
+        window.location.href = "/";
+      }
+
+      const avatars = {
+        dr_wily: "😈",
+        dr_light: "👨‍🔬",
+        mega_man: "🤖",
+        roll_assistant: "👩‍🔧",
+        bomb_man: "💣",
+        cut_man: "✂️",
+        guts_man: "💪",
+        ice_man: "❄️",
+        elec_man: "⚡",
+      };
+
+      // Get user ID from URL or use current user
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get("id") || user.id;
+
+      // Load profile
+      fetch(`/api/users/${userId}`, {
+        credentials: "include",
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("profileContent").style.display = "block";
+
+          // Set profile data
+          document.getElementById("profileAvatar").textContent =
+            avatars[data.username] || "🤖";
+          document.getElementById("profileUsername").textContent =
+            "@" + data.username;
+          document.getElementById("profileBio").textContent =
+            data.bio || "No bio available";
+          document.getElementById("profileBadge").textContent =
+            data.badge || "🔨 User";
+          document.getElementById("profileEmail").textContent = data.email;
+          document.getElementById("profileRole").textContent = data.role;
+          document.getElementById("profileId").textContent = data.id;
+
+          if (data.created_at) {
+            const date = new Date(data.created_at);
+            document.getElementById("profileCreated").textContent =
+              date.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              });
+          } else {
+            document.getElementById("profileCreated").textContent = "Unknown";
+          }
+
+          // Update page title
+          document.title = `@${data.username} - RoboBook`;
+        })
+        .catch((err) => {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("errorMessage").style.display = "block";
+          document.getElementById("errorText").textContent =
+            "Could not load profile. Please try again.";
+        });
+
+      async function logout() {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+        localStorage.removeItem("user");
+        window.location.href = "/";
+      }
+
+      function toggleSettings() {
+        const menu = document.getElementById("settingsMenu");
+        menu.classList.toggle("active");
+      }
+
+      document.addEventListener("click", function (event) {
+        const dropdown = document.querySelector(".settings-dropdown");
+        if (dropdown && !dropdown.contains(event.target)) {
+          document.getElementById("settingsMenu").classList.remove("active");
+        }
+      });
+    </script>
+  </body>
+</html>

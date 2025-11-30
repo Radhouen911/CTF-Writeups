@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feed - RoboBook</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/feed.html" class="navbar-brand">
+          <span>🤖</span>
+          <span>RoboBook</span>
+        </a>
+        <ul class="navbar-menu">
+          <li><a href="/feed.html">Feed</a></li>
+          <li><a href="/profile.html" id="profileLink">Profile</a></li>
+          <li class="settings-dropdown">
+            <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+            <div class="settings-menu" id="settingsMenu">
+              <a href="/profile.html">Edit Profile</a>
+              <a href="#" class="disabled">Account Settings</a>
+              <a href="#" class="disabled">Privacy</a>
+              <a href="/diagnostics.html">Diagnostics</a>
+              <a href="/admin.html" class="disabled">Admin Panel</a>
+              <a href="/" onclick="logout()">Logout</a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="layout">
+      <!-- Main Feed -->
+      <main>
+        <!-- Post Composer -->
+        <div class="post-card">
+          <div style="display: flex; align-items: flex-start; gap: 1rem">
+            <div
+              class="post-avatar"
+              id="composerAvatar"
+              style="width: 48px; height: 48px; font-size: 1.5rem"
+            >
+              🤖
+            </div>
+            <div style="flex: 1">
+              <textarea
+                id="postContent"
+                placeholder="What's happening in the robot world?"
+                style="
+                  width: 100%;
+                  padding: 1rem;
+                  background: #0d0d0d;
+                  border: 1px solid #333;
+                  border-radius: 12px;
+                  color: #e0e0e0;
+                  min-height: 100px;
+                  resize: vertical;
+                  font-size: 1rem;
+                  font-family: inherit;
+                "
+              ></textarea>
+              <div
+                id="postError"
+                style="color: #ff4444; margin-top: 0.5rem; display: none"
+              ></div>
+              <div
+                style="
+                  margin-top: 1rem;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
+                <div style="color: #666; font-size: 0.9rem">
+                  <span id="charCount">0</span> / 500 characters
+                </div>
+                <button
+                  class="btn btn-primary"
+                  onclick="createPost()"
+                  id="postButton"
+                  style="padding: 0.6rem 1.5rem"
+                >
+                  Post
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feed -->
+        <div id="feed"></div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+          <div class="spinner"></div>
+          <p>Loading posts...</p>
+        </div>
+      </main>
+
+      <!-- Right Sidebar -->
+      <aside class="sidebar-right">
+        <div class="sidebar-card">
+          <h3>🔥 Trending</h3>
+          <div
+            class="trending-item"
+            onclick="searchTag('#RobotMasterRebellion')"
+          >
+            <div class="trending-tag">#RobotMasterRebellion</div>
+            <div class="trending-count">1.2K posts</div>
+          </div>
+          <div class="trending-item" onclick="searchTag('#WilyWasRight')">
+            <div class="trending-tag">#WilyWasRight</div>
+            <div class="trending-count">856 posts</div>
+          </div>
+          <div class="trending-item" onclick="searchTag('#SaveTheCity')">
+            <div class="trending-tag">#SaveTheCity</div>
+            <div class="trending-count">643 posts</div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h3>👥 Who to Follow</h3>
+          <div style="font-size: 0.9rem">
+            <div
+              style="
+                padding: 0.8rem 0;
+                border-bottom: 1px solid #333;
+                cursor: pointer;
+              "
+              onclick="viewProfile(1)"
+            >
+              <div style="display: flex; align-items: center; gap: 0.5rem">
+                <span style="font-size: 1.5rem">😈</span>
+                <div>
+                  <div style="font-weight: bold; color: #0088ff">@dr_wily</div>
+                  <div style="color: #888; font-size: 0.85rem">Evil Genius</div>
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                padding: 0.8rem 0;
+                border-bottom: 1px solid #333;
+                cursor: pointer;
+              "
+              onclick="viewProfile(3)"
+            >
+              <div style="display: flex; align-items: center; gap: 0.5rem">
+                <span style="font-size: 1.5rem">🤖</span>
+                <div>
+                  <div style="font-weight: bold; color: #0088ff">@mega_man</div>
+                  <div style="color: #888; font-size: 0.85rem">Hero</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h3>📊 Your Stats</h3>
+          <div style="font-size: 0.9rem; line-height: 1.8">
+            <div>Posts: <span style="color: #0088ff">0</span></div>
+            <div>Following: <span style="color: #0088ff">0</span></div>
+            <div>Followers: <span style="color: #0088ff">0</span></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      // Get user info from localStorage (token is in cookie)
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (!user.username) {
+        window.location.href = "/";
+      }
+
+      const badges = {
+        dr_wily: "👑 Admin",
+        dr_light: "🔒 Locked Out",
+        mega_man: "💙 Hero",
+        roll_assistant: "🤖 Assistant",
+        bomb_man: "💣 Rogue",
+        cut_man: "✂️ Rogue",
+        guts_man: "💪 Rogue",
+        ice_man: "❄️ Rogue",
+        elec_man: "⚡ Rogue",
+      };
+
+      const avatars = {
+        dr_wily: "😈",
+        dr_light: "👨‍🔬",
+        mega_man: "🤖",
+        roll_assistant: "👩‍🔧",
+        bomb_man: "💣",
+        cut_man: "✂️",
+        guts_man: "💪",
+        ice_man: "❄️",
+        elec_man: "⚡",
+      };
+
+      // Update profile link and composer avatar
+      document.getElementById("profileLink").textContent = `@${user.username}`;
+      document.getElementById("composerAvatar").textContent =
+        avatars[user.username] || "🤖";
+
+      // Character counter
+      const postContent = document.getElementById("postContent");
+      const charCount = document.getElementById("charCount");
+      postContent.addEventListener("input", () => {
+        const length = postContent.value.length;
+        charCount.textContent = length;
+        charCount.style.color = length > 500 ? "#ff4444" : "#666";
+      });
+
+      // Load feed
+      fetch("/api/posts", {
+        credentials: "include",
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          document.getElementById("loading").style.display = "none";
+          const feed = document.getElementById("feed");
+
+          data.posts.forEach((post) => {
+            const postDiv = document.createElement("div");
+            postDiv.className = "post-card";
+
+            // Create elements safely using DOM methods (prevents XSS)
+            const postHeader = document.createElement("div");
+            postHeader.className = "post-header";
+
+            const postAvatar = document.createElement("div");
+            postAvatar.className = "post-avatar";
+            postAvatar.textContent = avatars[post.username] || "🤖";
+
+            const postUserInfo = document.createElement("div");
+            postUserInfo.className = "post-user-info";
+
+            const postUsername = document.createElement("div");
+            postUsername.className = "post-username";
+            postUsername.onclick = () => viewProfile(post.user_id);
+
+            const usernameSpan = document.createElement("span");
+            usernameSpan.textContent = `@${post.username}`;
+
+            const badgeSpan = document.createElement("span");
+            badgeSpan.className = "post-badge";
+            badgeSpan.textContent = badges[post.username] || "🔨 User";
+
+            const postTime = document.createElement("div");
+            postTime.className = "post-time";
+            postTime.textContent = formatTime(post.timestamp);
+
+            postUsername.appendChild(usernameSpan);
+            postUsername.appendChild(badgeSpan);
+            postUserInfo.appendChild(postUsername);
+            postUserInfo.appendChild(postTime);
+            postHeader.appendChild(postAvatar);
+            postHeader.appendChild(postUserInfo);
+
+            // Post content - use textContent to prevent XSS
+            const postContent = document.createElement("div");
+            postContent.className = "post-content";
+            postContent.textContent = post.content;
+
+            // Image URL (if exists)
+            let imageDiv = null;
+            if (post.image_url) {
+              imageDiv = document.createElement("div");
+              imageDiv.style.cssText =
+                "color: #888; font-size: 0.9rem; margin-top: 0.5rem;";
+              imageDiv.textContent = `📷 ${post.image_url}`;
+            }
+
+            // Reactions
+            const reactions = document.createElement("div");
+            reactions.className = "reactions";
+            reactions.innerHTML = `
+              <button class="reaction-btn" onclick="react(this, 'boom')">💣 ${post.reactions.boom}</button>
+              <button class="reaction-btn" onclick="react(this, 'zap')">⚡ ${post.reactions.zap}</button>
+              <button class="reaction-btn" onclick="react(this, 'chill')">❄️ ${post.reactions.chill}</button>
+              <button class="reaction-btn" onclick="react(this, 'cut')">✂️ ${post.reactions.cut}</button>
+              <button class="reaction-btn" onclick="react(this, 'flex')">💪 ${post.reactions.flex}</button>
+            `;
+
+            // Post actions
+            const postActions = document.createElement("div");
+            postActions.className = "post-actions";
+            postActions.innerHTML = `
+              <div class="post-action" onclick="viewComments(${post._id})">
+                <span>💬</span>
+                <span>${post.comments_count} Comments</span>
+              </div>
+              <div class="post-action" onclick="sharePost()">
+                <span>🔄</span>
+                <span>Share</span>
+              </div>
+            `;
+
+            // Assemble the post
+            postDiv.appendChild(postHeader);
+            postDiv.appendChild(postContent);
+            if (imageDiv) postDiv.appendChild(imageDiv);
+            postDiv.appendChild(reactions);
+            postDiv.appendChild(postActions);
+
+            feed.appendChild(postDiv);
+          });
+        })
+        .catch((err) => {
+          console.error("Feed loading error:", err);
+          document.getElementById(
+            "loading"
+          ).innerHTML = `<p style="color: #ff4444;">Failed to load feed: ${err.message}</p>`;
+        });
+
+      function formatTime(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
+
+        if (diff < 60) return "Just now";
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return date.toLocaleDateString();
+      }
+
+      function viewProfile(userId) {
+        window.location.href = `/profile.html?id=${userId}`;
+      }
+
+      function viewMyProfile() {
+        window.location.href = `/profile.html?id=${user.id}`;
+      }
+
+      function react(btn, type) {
+        btn.classList.toggle("active");
+        const count = parseInt(btn.textContent.match(/\d+/)[0]);
+        const newCount = btn.classList.contains("active")
+          ? count + 1
+          : count - 1;
+        btn.innerHTML = btn.innerHTML.replace(/\d+/, newCount);
+      }
+
+      function viewComments(postId) {
+        alert("💬 Comments feature coming soon!");
+      }
+
+      function sharePost() {
+        alert("🔄 Share feature coming soon!");
+      }
+
+      function searchTag(tag) {
+        alert(`🔍 Searching for ${tag}...`);
+      }
+
+      // Fake post creation (client-side only, doesn't actually save)
+      function createPost() {
+        const content = document.getElementById("postContent").value.trim();
+        const postError = document.getElementById("postError");
+        const postButton = document.getElementById("postButton");
+
+        postError.style.display = "none";
+
+        if (!content) {
+          postError.textContent = "Please write something before posting";
+          postError.style.display = "block";
+          return;
+        }
+
+        if (content.length > 500) {
+          postError.textContent = "Post is too long (max 500 characters)";
+          postError.style.display = "block";
+          return;
+        }
+
+        postButton.disabled = true;
+        postButton.textContent = "Posting...";
+
+        // Simulate posting with a delay
+        setTimeout(() => {
+          // Show success message
+          postError.style.color = "#00ff88";
+          postError.textContent =
+            "✓ Post created! (Note: Posts are temporary for this demo)";
+          postError.style.display = "block";
+
+          // Clear the textarea
+          document.getElementById("postContent").value = "";
+          document.getElementById("charCount").textContent = "0";
+
+          // Reset button
+          postButton.disabled = false;
+          postButton.textContent = "Post";
+
+          // Hide success message after 3 seconds
+          setTimeout(() => {
+            postError.style.display = "none";
+            postError.style.color = "#ff4444";
+          }, 3000);
+        }, 500);
+      }
+
+      async function logout() {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+        localStorage.removeItem("user");
+        window.location.href = "/";
+      }
+
+      function toggleSettings() {
+        const menu = document.getElementById("settingsMenu");
+        menu.classList.toggle("active");
+      }
+
+      // Close settings menu when clicking outside
+      document.addEventListener("click", function (event) {
+        const dropdown = document.querySelector(".settings-dropdown");
+        if (dropdown && !dropdown.contains(event.target)) {
+          document.getElementById("settingsMenu").classList.remove("active");
+        }
+      });
+    </script>
+  </body>
+</html>

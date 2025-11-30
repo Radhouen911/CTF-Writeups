@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - RoboBook</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/" class="navbar-brand">
+          <span>🤖</span>
+          <span>RoboBook</span>
+        </a>
+        <ul class="navbar-menu">
+          <li><a href="/">Home</a></li>
+          <li><a href="/register.html">Sign Up</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="form-card">
+        <div class="text-center mb-2">
+          <div style="font-size: 3rem; margin-bottom: 1rem">🤖</div>
+          <h1
+            class="pixel-font"
+            style="font-size: 1.5rem; color: #0088ff; margin-bottom: 0.5rem"
+          >
+            Welcome Back
+          </h1>
+          <p style="color: #888">Login to RoboBook</p>
+        </div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Enter your username"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+
+        <!-- 2FA Section -->
+        <div
+          id="2faSection"
+          style="
+            display: none;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #333;
+          "
+        >
+          <h3 style="color: #0088ff; margin-bottom: 1rem">
+            Two-Factor Authentication
+          </h3>
+          <p style="color: #888; margin-bottom: 1rem">
+            Enter your 2FA code or backup code:
+          </p>
+
+          <div class="form-group">
+            <label for="2faCode">2FA Code</label>
+            <input type="text" id="2faCode" placeholder="000000" />
+          </div>
+
+          <div class="form-group">
+            <label for="backupCode">Or Backup Code</label>
+            <input type="text" id="backupCode" placeholder="BACKUP-CODE-HERE" />
+          </div>
+
+          <button onclick="verify2FA()" class="btn btn-primary btn-block">
+            Verify
+          </button>
+        </div>
+
+        <div id="message"></div>
+
+        <!-- Hints -->
+        <div class="alert alert-info" style="margin-top: 2rem">
+          <strong>💡 CTF Hint:</strong> This login uses MongoDB. Try NoSQL
+          injection!<br />
+          <code style="color: #0088ff; font-size: 0.9rem"
+            >{"username": "admin", "password": {"$ne": null}}</code
+          >
+        </div>
+
+        <div class="text-center mt-2">
+          <p style="color: #888">
+            Don't have an account?
+            <a href="/register.html" style="color: #0088ff">Sign up here</a>
+          </p>
+          <p style="color: #888">
+            <a href="/" style="color: #0088ff">← Back to home</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      console.log("💡 NoSQL Injection Hint:");
+      console.log(
+        "Try sending JSON with MongoDB operators like $ne, $gt, etc."
+      );
+      console.log(
+        'Example payload: {"username": "dr_wily", "password": {"$ne": null}}'
+      );
+      console.log("");
+      console.log("Or use Burp Suite to intercept and modify the request!");
+
+      let tempSession = null;
+
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+          const messageDiv = document.getElementById("message");
+
+          messageDiv.innerHTML =
+            '<div class="alert alert-info">Logging in...</div>';
+
+          try {
+            const response = await fetch("/api/auth/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, password }),
+            });
+
+            const data = await response.json();
+
+            if (data.requires_2fa) {
+              tempSession = data;
+              document.getElementById("2faSection").style.display = "block";
+              messageDiv.innerHTML =
+                '<div class="alert alert-info">⚠️ 2FA required. Enter your code below.</div>';
+            } else if (data.success) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("user", JSON.stringify(data.user));
+              messageDiv.innerHTML =
+                '<div class="alert alert-success">✅ Login successful! Redirecting...</div>';
+              setTimeout(() => (window.location.href = "/feed.html"), 1000);
+            } else {
+              messageDiv.innerHTML = `<div class="alert alert-error">❌ ${data.error}</div>`;
+            }
+          } catch (err) {
+            messageDiv.innerHTML =
+              '<div class="alert alert-error">❌ Login failed. Check console for details.</div>';
+            console.error(err);
+          }
+        });
+
+      async function verify2FA() {
+        const code = document.getElementById("2faCode").value;
+        const backupCode = document.getElementById("backupCode").value;
+        const messageDiv = document.getElementById("message");
+
+        if (!code && !backupCode) {
+          messageDiv.innerHTML =
+            '<div class="alert alert-error">❌ Please enter a 2FA code or backup code</div>';
+          return;
+        }
+
+        messageDiv.innerHTML =
+          '<div class="alert alert-info">Verifying...</div>';
+
+        try {
+          const response = await fetch("/api/auth/verify-2fa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: tempSession.user_id,
+              code: code || undefined,
+              backup_code: backupCode || undefined,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
+
+            if (data.flag_fragment_2) {
+              messageDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <h3>🎉 FLAG FRAGMENT 2 FOUND!</h3>
+                                <p><strong>${data.flag_fragment_2}</strong></p>
+                                <p>${data.hint}</p>
+                            </div>
+                        `;
+              setTimeout(() => (window.location.href = "/feed.html"), 3000);
+            } else {
+              messageDiv.innerHTML =
+                '<div class="alert alert-success">✅ 2FA verified! Redirecting...</div>';
+              setTimeout(() => (window.location.href = "/feed.html"), 1000);
+            }
+          } else {
+            messageDiv.innerHTML = `<div class="alert alert-error">❌ ${data.error}</div>`;
+          }
+        } catch (err) {
+          messageDiv.innerHTML =
+            '<div class="alert alert-error">❌ 2FA verification failed</div>';
+          console.error(err);
+        }
+      }
+    </script>
+  </body>
+</html>

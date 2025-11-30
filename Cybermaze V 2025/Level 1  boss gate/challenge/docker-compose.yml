@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  arcade-overdrive:
+    build: .
+    ports:
+      - "5002:5002"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 128m
+    pids_limit: 50
+    tmpfs:
+      - /tmp:size=10M,mode=1777
+      - /run:size=10M,mode=755
+      - /var/lib/nginx:size=10M,mode=755
+    environment:
+      - PYTHONUNBUFFERED=1

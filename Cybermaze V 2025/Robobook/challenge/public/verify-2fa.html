@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Two-Factor Authentication - RoboBook</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="landing-container">
+      <div class="landing-content">
+        <div class="landing-auth" style="max-width: 500px; margin: 0 auto">
+          <div style="text-align: center; margin-bottom: 2rem">
+            <h1 class="pixel-font" style="color: #0088ff; font-size: 1.5rem">
+              🔐 Two-Factor Authentication
+            </h1>
+            <p style="color: #888; margin-top: 1rem">
+              Enter your authentication code to continue
+            </p>
+          </div>
+
+          <div class="post-card" style="margin-bottom: 2rem">
+            <div style="text-align: center; margin-bottom: 1.5rem">
+              <div
+                style="
+                  font-size: 3rem;
+                  margin-bottom: 1rem;
+                  display: inline-block;
+                  padding: 1rem;
+                  background: rgba(0, 136, 255, 0.1);
+                  border-radius: 50%;
+                "
+              >
+                🤖
+              </div>
+              <h3 id="username" style="color: #0088ff"></h3>
+            </div>
+
+            <form id="verifyForm">
+              <div class="form-group">
+                <label for="code">Authentication Code</label>
+                <input
+                  type="text"
+                  id="code"
+                  name="code"
+                  placeholder="Enter 6-digit code or backup code"
+                  autocomplete="off"
+                  required
+                  style="
+                    text-align: center;
+                    font-size: 1.2rem;
+                    letter-spacing: 0.3rem;
+                  "
+                />
+                <small style="color: #888; display: block; margin-top: 0.5rem">
+                  Enter the 6-digit code from your authenticator app
+                </small>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block">
+                Verify
+              </button>
+            </form>
+
+            <div id="message" style="margin-top: 1rem"></div>
+
+            <div
+              style="
+                margin-top: 2rem;
+                padding-top: 2rem;
+                border-top: 1px solid #333;
+                text-align: center;
+              "
+            >
+              <details style="cursor: pointer">
+                <summary
+                  style="
+                    color: #0088ff;
+                    font-size: 0.9rem;
+                    list-style: none;
+                    user-select: none;
+                  "
+                >
+                  ▼ Having trouble?
+                </summary>
+                <div
+                  style="
+                    margin-top: 1rem;
+                    padding: 1rem;
+                    background: rgba(0, 136, 255, 0.05);
+                    border-radius: 8px;
+                    text-align: left;
+                  "
+                >
+                  <p style="color: #888; font-size: 0.85rem; line-height: 1.6">
+                    <strong style="color: #0088ff"
+                      >Lost access to your authenticator?</strong
+                    ><br />
+                    You can use a backup code instead of the 6-digit code.
+                  </p>
+                </div>
+              </details>
+
+              <div style="margin-top: 1.5rem">
+                <a
+                  href="/"
+                  style="color: #666; font-size: 0.9rem; text-decoration: none"
+                  >← Back to login</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <div
+            style="
+              text-align: center;
+              color: #666;
+              font-size: 0.85rem;
+              margin-top: 2rem;
+            "
+          >
+            <p>🔒 Your account is protected with 2FA</p>
+            <p style="margin-top: 0.5rem">© 1987 Light Labs • RoboBook v1.0</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Get session data from sessionStorage
+      const tempSession = JSON.parse(
+        sessionStorage.getItem("2fa_session") || "{}"
+      );
+
+      if (!tempSession.user_id) {
+        window.location.href = "/";
+      }
+
+      // Display username
+      document.getElementById("username").textContent =
+        "@" + (tempSession.username || "user");
+
+      document
+        .getElementById("verifyForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const code = document.getElementById("code").value.trim();
+          const messageDiv = document.getElementById("message");
+          const submitBtn = e.target.querySelector('button[type="submit"]');
+
+          if (!code) {
+            messageDiv.innerHTML =
+              '<div class="alert alert-error">❌ Please enter a code</div>';
+            return;
+          }
+
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Verifying...";
+          messageDiv.innerHTML =
+            '<div class="alert alert-info">🔄 Verifying...</div>';
+
+          try {
+            // Determine if it's a TOTP code (6 digits) or backup code
+            const isTotp = /^\d{6}$/.test(code);
+
+            const response = await fetch("/api/auth/verify-2fa", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                user_id: tempSession.user_id,
+                code: isTotp ? code : undefined,
+                backup_code: !isTotp ? code : undefined,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              // Store user info
+              localStorage.setItem("user", JSON.stringify(data.user));
+
+              // Clear session storage
+              sessionStorage.removeItem("2fa_session");
+
+              if (data.flag_fragment_2) {
+                messageDiv.innerHTML = `
+                  <div style="background: #000; border: 4px solid #00ff00; border-radius: 12px; padding: 2rem; box-shadow: 0 0 30px rgba(0,255,0,0.5); animation: arcadePulse 1.5s infinite;">
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                      <div style="font-size: 3rem; margin-bottom: 0.5rem; animation: arcadeBounce 0.8s infinite;">🏆</div>
+                      <h3 class="pixel-font" style="color: #00ff00; font-size: 1.2rem; text-shadow: 0 0 10px #00ff00; margin-bottom: 0.5rem;">
+                        ${data.arcade_message || "🎮 LEVEL COMPLETE! 🎮"}
+                      </h3>
+                      <div style="color: #ffff00; font-size: 0.9rem; margin-bottom: 1rem;">
+                        ${data.achievement || "⭐ ADMIN ACCESS UNLOCKED ⭐"}
+                      </div>
+                    </div>
+                    
+                    <div style="background: #001100; border: 2px solid #00ff00; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; box-shadow: inset 0 0 20px rgba(0,255,0,0.2);">
+                      <div style="text-align: center; margin-bottom: 1rem;">
+                        <span style="color: #00ff00; font-size: 0.9rem; font-weight: bold;">🔑 FLAG FRAGMENT #2 🔑</span>
+                      </div>
+                      <code style="display: block; background: #000; border: 1px solid #00ff00; padding: 1rem; border-radius: 4px; color: #00ff00; text-align: center; font-family: 'Courier New', monospace; font-size: 1rem; word-break: break-all; box-shadow: 0 0 10px rgba(0,255,0,0.3);">${
+                        data.flag_fragment_2
+                      }</code>
+                    </div>
+                    
+                    <div style="background: rgba(0,136,255,0.1); border-left: 3px solid #0088ff; padding: 1rem; margin-top: 1rem; border-radius: 4px;">
+                      <div style="color: #0088ff; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.5rem;">💡 NEXT OBJECTIVE:</div>
+                      <div style="color: #888; font-size: 0.85rem; line-height: 1.6; white-space: pre-line;">${
+                        data.hint
+                      }</div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #333;">
+                      <div style="color: #00ff88; font-size: 0.85rem;">
+                        ${data.next_stage || "Redirecting to dashboard..."}
+                      </div>
+                      <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">
+                        Auto-redirect in 5 seconds...
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <style>
+                    @keyframes arcadePulse {
+                      0%, 100% { box-shadow: 0 0 30px rgba(0,255,0,0.5); }
+                      50% { box-shadow: 0 0 50px rgba(0,255,0,0.8), 0 0 70px rgba(0,255,0,0.6); }
+                    }
+                    @keyframes arcadeBounce {
+                      0%, 100% { transform: translateY(0) scale(1); }
+                      50% { transform: translateY(-15px) scale(1.1); }
+                    }
+                  </style>
+                `;
+                setTimeout(() => (window.location.href = "/admin.html"), 5000);
+              } else {
+                messageDiv.innerHTML =
+                  '<div class="alert alert-success">✅ Verification successful!</div>';
+                setTimeout(() => (window.location.href = "/feed.html"), 1000);
+              }
+            } else {
+              messageDiv.innerHTML = `<div class="alert alert-error">❌ ${data.error}</div>`;
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Verify";
+
+              // Clear the input on error
+              document.getElementById("code").value = "";
+              document.getElementById("code").focus();
+            }
+          } catch (err) {
+            messageDiv.innerHTML =
+              '<div class="alert alert-error">❌ Verification failed. Please try again.</div>';
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Verify";
+            console.error(err);
+          }
+        });
+
+      // Auto-focus on code input
+      document.getElementById("code").focus();
+
+      // Format input as user types (for TOTP codes)
+      document.getElementById("code").addEventListener("input", (e) => {
+        const value = e.target.value;
+        // If it looks like a TOTP code, limit to 6 digits
+        if (/^\d+$/.test(value) && value.length > 6) {
+          e.target.value = value.slice(0, 6);
+        }
+      });
+    </script>
+  </body>
+</html>

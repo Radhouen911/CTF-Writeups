@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - RoboBook</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar" style="border-bottom-color: #ff0000">
+      <div class="navbar-container">
+        <a href="/feed.html" class="navbar-brand" style="color: #ff0000">
+          <span>😈</span>
+          <span>Admin Panel</span>
+        </a>
+        <ul class="navbar-menu">
+          <li><a href="/feed.html">Feed</a></li>
+          <li><a href="/diagnostics.html">Diagnostics</a></li>
+          <li><a href="/admin.html" style="color: #ff0000">Admin</a></li>
+          <li><a href="/" onclick="logout()">Logout</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div
+        class="post-card"
+        style="
+          background: linear-gradient(135deg, #ff0000, #cc0000);
+          border: none;
+        "
+      >
+        <h1 class="pixel-font" style="font-size: 1.5rem; margin-bottom: 0.5rem">
+          😈 Admin Dashboard
+        </h1>
+        <p>Admin access required</p>
+      </div>
+
+      <div class="alert alert-error">
+        <strong>⚠️ Admin Access Required</strong><br />
+        You need to be logged in as an administrator to access this panel.
+      </div>
+
+      <div id="adminPanel" style="display: none">
+        <div class="post-card">
+          <h2 style="color: #ff0000; margin-bottom: 1rem">
+            🗝️ Master Override Terminal
+          </h2>
+          <p style="margin-bottom: 1.5rem">
+            Submit the Master Override Code to shut down all Robot Masters.
+          </p>
+
+          <form id="overrideForm">
+            <div class="form-group">
+              <label for="code">Master Override Code</label>
+              <input
+                type="text"
+                id="code"
+                name="code"
+                placeholder="CM{...}"
+                required
+                style="font-family: monospace; font-size: 1.1rem"
+              />
+              <small style="color: #888"
+                >Enter the complete override code</small
+              >
+            </div>
+            <button
+              type="submit"
+              class="btn btn-primary btn-block"
+              style="background: #ff0000"
+            >
+              Submit Override Code
+            </button>
+          </form>
+
+          <div id="result"></div>
+        </div>
+
+        <div class="post-card">
+          <h3>🤖 Robot Master Status</h3>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              gap: 1rem;
+              margin-top: 1rem;
+            "
+          >
+            <div
+              style="
+                padding: 1rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+                border: 1px solid #ff4444;
+              "
+            >
+              <div style="font-size: 2rem; margin-bottom: 0.5rem">💣</div>
+              <div style="font-weight: bold">Bomb Man</div>
+              <div style="font-size: 0.85rem; color: #ff4444">ROGUE</div>
+            </div>
+            <div
+              style="
+                padding: 1rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+                border: 1px solid #ff4444;
+              "
+            >
+              <div style="font-size: 2rem; margin-bottom: 0.5rem">✂️</div>
+              <div style="font-weight: bold">Cut Man</div>
+              <div style="font-size: 0.85rem; color: #ff4444">ROGUE</div>
+            </div>
+            <div
+              style="
+                padding: 1rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+                border: 1px solid #ff4444;
+              "
+            >
+              <div style="font-size: 2rem; margin-bottom: 0.5rem">💪</div>
+              <div style="font-weight: bold">Guts Man</div>
+              <div style="font-size: 0.85rem; color: #ff4444">ROGUE</div>
+            </div>
+            <div
+              style="
+                padding: 1rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+                border: 1px solid #ff4444;
+              "
+            >
+              <div style="font-size: 2rem; margin-bottom: 0.5rem">❄️</div>
+              <div style="font-weight: bold">Ice Man</div>
+              <div style="font-size: 0.85rem; color: #ff4444">ROGUE</div>
+            </div>
+            <div
+              style="
+                padding: 1rem;
+                background: #0d0d0d;
+                border-radius: 8px;
+                border: 1px solid #ff4444;
+              "
+            >
+              <div style="font-size: 2rem; margin-bottom: 0.5rem">⚡</div>
+              <div style="font-weight: bold">Elec Man</div>
+              <div style="font-size: 0.85rem; color: #ff4444">ROGUE</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (!user.username) {
+        window.location.href = "/";
+      }
+
+      if (user.role === "admin") {
+        document.getElementById("adminPanel").style.display = "block";
+      }
+
+      document
+        .getElementById("overrideForm")
+        ?.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const code = document.getElementById("code").value;
+          const resultDiv = document.getElementById("result");
+
+          resultDiv.innerHTML =
+            '<div class="alert alert-info">Submitting override code...</div>';
+
+          try {
+            const response = await fetch("/api/admin/override", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({ override_code: code }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              resultDiv.innerHTML = `
+                        <div class="post-card" style="background: #000; border: 4px solid #00ff00; box-shadow: 0 0 20px #00ff00; margin-top: 1.5rem; animation: pulse 2s infinite;">
+                            <div style="text-align: center; margin-bottom: 2rem;">
+                                <div style="font-size: 4rem; margin-bottom: 1rem; animation: bounce 1s infinite;">🏆</div>
+                                <h2 class="pixel-font" style="font-size: 1.2rem; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-bottom: 1rem;">
+                                    ★ MISSION COMPLETE ★
+                                </h2>
+                                <div style="font-size: 0.9rem; color: #00ff88; margin-bottom: 1rem;">
+                                    ${data.message}
+                                </div>
+                            </div>
+                            
+                            <div style="background: #001100; padding: 1.5rem; border: 2px solid #00ff00; border-radius: 8px; margin: 1.5rem 0; box-shadow: inset 0 0 20px rgba(0,255,0,0.2);">
+                                <div style="text-align: center; margin-bottom: 1rem;">
+                                    <span style="color: #00ff00; font-size: 1rem; font-weight: bold;">🎮 FLAG CAPTURED 🎮</span>
+                                </div>
+                                <code style="display: block; font-size: 1.1rem; color: #00ff00; text-align: center; padding: 1rem; background: #000; border: 1px solid #00ff00; border-radius: 4px; font-family: 'Courier New', monospace; word-break: break-all;">${
+                                  data.flag
+                                }</code>
+                            </div>
+                            
+                            <div style="background: #001100; padding: 1.5rem; border: 2px solid #0088ff; border-radius: 8px; margin-top: 1.5rem;">
+                                <div style="text-align: center; margin-bottom: 1rem;">
+                                    <span style="color: #0088ff; font-size: 1rem; font-weight: bold;">📊 GAME STATS 📊</span>
+                                </div>
+                                <div style="display: grid; gap: 0.8rem; font-size: 0.9rem;">
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,136,255,0.1); border-left: 3px solid #0088ff;">
+                                        <span style="color: #888;">Stages Cleared:</span>
+                                        <span style="color: #00ff00; font-weight: bold;">${
+                                          data.stats.stages_completed
+                                        }/5</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(0,136,255,0.1); border-left: 3px solid #0088ff;">
+                                        <span style="color: #888;">Fragments Found:</span>
+                                        <span style="color: #00ff00; font-weight: bold;">${
+                                          data.stats.fragments_collected
+                                        }/2</span>
+                                    </div>
+                                    <div style="padding: 0.5rem; background: rgba(0,136,255,0.1); border-left: 3px solid #0088ff;">
+                                        <div style="color: #888; margin-bottom: 0.5rem;">Exploit Chain:</div>
+                                        <div style="color: #00ff88; font-size: 0.85rem; line-height: 1.6;">
+                                            ${data.stats.exploit_chain
+                                              .map(
+                                                (exploit, i) =>
+                                                  `<div>Level ${
+                                                    i + 1
+                                                  }: ${exploit}</div>`
+                                              )
+                                              .join("")}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center; margin-top: 2rem; padding: 1rem; background: rgba(0,255,0,0.1); border-radius: 8px;">
+                                <div style="font-size: 1.1rem; color: #00ff00; margin-bottom: 0.5rem;">
+                                    ${data.congratulations}
+                                </div>
+                                <div style="font-size: 0.85rem; color: #888; margin-top: 1rem;">
+                                    🎮 Thanks for playing! 🎮
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <style>
+                            @keyframes pulse {
+                                0%, 100% { box-shadow: 0 0 20px #00ff00; }
+                                50% { box-shadow: 0 0 40px #00ff00, 0 0 60px #00ff00; }
+                            }
+                            @keyframes bounce {
+                                0%, 100% { transform: translateY(0); }
+                                50% { transform: translateY(-10px); }
+                            }
+                        </style>
+                    `;
+            } else {
+              resultDiv.innerHTML = `<div class="alert alert-error">❌ ${data.error}</div>`;
+            }
+          } catch (err) {
+            resultDiv.innerHTML = `<div class="alert alert-error">❌ Error: ${err.message}</div>`;
+          }
+        });
+
+      async function logout() {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+        localStorage.removeItem("user");
+        window.location.href = "/";
+      }
+    </script>
+  </body>
+</html>

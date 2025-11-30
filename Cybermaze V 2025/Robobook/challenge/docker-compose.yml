@@ -1,0 +1,52 @@
+name: robobook-ctf
+
+services:
+  mongodb:
+    image: mongo:6
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: R0b0M4st3rS3cur3Passw0rd2024xYz
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - mongodb_data:/data/db
+    networks:
+      - robobook-network
+    restart: on-failure
+
+  web:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      MONGODB_URI: mongodb://admin:R0b0M4st3rS3cur3Passw0rd2024xYz@mongodb:27017/robobook?authSource=admin
+      JWT_SECRET: robot7
+      NODE_ENV: production
+      PORT: 4000
+    depends_on:
+      - mongodb
+    volumes:
+      - ./secrets:/app/secrets:ro
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=10M
+    networks:
+      - robobook-network
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  robobook-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:

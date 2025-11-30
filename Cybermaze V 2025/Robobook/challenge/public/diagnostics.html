@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diagnostics - RoboBook</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .terminal {
+        background: #000;
+        color: #0f0;
+        padding: 1.5rem;
+        border-radius: 8px;
+        font-family: "Courier New", monospace;
+        white-space: pre-wrap;
+        min-height: 200px;
+        border: 1px solid #0f0;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/feed.html" class="navbar-brand">
+          <span>🤖</span>
+          <span>RoboBook</span>
+        </a>
+        <ul class="navbar-menu">
+          <li><a href="/feed.html">Feed</a></li>
+          <li><a href="/diagnostics.html">Diagnostics</a></li>
+          <li><a href="/admin.html">Admin</a></li>
+          <li><a href="/" onclick="logout()">Logout</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="post-card">
+        <h1
+          class="pixel-font"
+          style="font-size: 1.5rem; color: #0088ff; margin-bottom: 0.5rem"
+        >
+          🛠️ Server Health Check
+        </h1>
+        <p style="color: #888">Engineer access required</p>
+      </div>
+
+      <div class="alert alert-info">
+        <strong>⚠️ Access Restricted</strong><br />
+        This feature requires <strong>engineer</strong> role.
+      </div>
+
+      <div class="post-card">
+        <h3 style="margin-bottom: 1rem">Network Diagnostics</h3>
+        <p style="color: #888; margin-bottom: 1rem">
+          Test network connectivity to remote servers. The ping command will be
+          executed on the server.
+        </p>
+        <form id="pingForm">
+          <div class="form-group">
+            <label for="target">Target IP Address</label>
+            <input
+              type="text"
+              id="target"
+              name="target"
+              placeholder="8.8.8.8"
+              required
+            />
+            <small style="color: #888">
+              Enter an IP address to ping (e.g., 8.8.8.8, 1.1.1.1)
+            </small>
+          </div>
+          <button type="submit" class="btn btn-primary">Run Ping Test</button>
+        </form>
+
+        <div
+          id="output"
+          class="terminal"
+          style="display: none; margin-top: 1.5rem"
+        ></div>
+      </div>
+    </div>
+
+    <script>
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (!user.username) {
+        window.location.href = "/";
+      }
+
+      document
+        .getElementById("pingForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const target = document.getElementById("target").value;
+          const outputDiv = document.getElementById("output");
+
+          outputDiv.style.display = "block";
+          outputDiv.textContent = "> Running diagnostics...\n";
+
+          try {
+            const response = await fetch("/api/diagnostics/ping", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({ target }),
+            });
+
+            const data = await response.json();
+
+            if (response.status === 403) {
+              outputDiv.textContent = `❌ ${data.error}\n\nYou need engineer role to access this feature.`;
+              outputDiv.style.color = "#ff4444";
+            } else if (response.status === 400) {
+              // Handle blocked commands
+              outputDiv.textContent = `❌ ${data.error}`;
+              outputDiv.style.color = "#ff4444";
+            } else if (data.success) {
+              outputDiv.textContent = `✅ ${data.message}\n\n${data.output}`;
+              outputDiv.style.color = "#0f0";
+            } else {
+              outputDiv.textContent = `⚠️ ${
+                data.message || "Command failed"
+              }\n\n${data.output || data.error || "No output"}`;
+              outputDiv.style.color = "#ffaa00";
+            }
+          } catch (err) {
+            outputDiv.textContent = `❌ Error: ${err.message}`;
+            outputDiv.style.color = "#ff4444";
+          }
+        });
+
+      async function logout() {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+        localStorage.removeItem("user");
+        window.location.href = "/";
+      }
+    </script>
+  </body>
+</html>

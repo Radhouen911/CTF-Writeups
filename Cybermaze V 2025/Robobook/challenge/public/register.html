@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - RoboBook</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/" class="navbar-brand">
+          <span>🤖</span>
+          <span>RoboBook</span>
+        </a>
+        <ul class="navbar-menu">
+          <li><a href="/">Home</a></li>
+          <li><a href="/login.html">Login</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+      <div class="form-card">
+        <div class="text-center mb-2">
+          <div style="font-size: 3rem; margin-bottom: 1rem">🤖</div>
+          <h1
+            class="pixel-font"
+            style="font-size: 1.5rem; color: #0088ff; margin-bottom: 0.5rem"
+          >
+            Join RoboBook
+          </h1>
+          <p style="color: #888">Create your account in 20XX</p>
+        </div>
+
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Choose a username"
+              required
+            />
+            <small style="color: #888; font-size: 0.85rem"
+              >This will be your @username</small
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="your@email.com"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Min 8 characters"
+              required
+            />
+            <small style="color: #888; font-size: 0.85rem"
+              >Must be at least 8 characters</small
+            >
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Create Account
+          </button>
+        </form>
+
+        <div id="message"></div>
+
+        <div class="text-center mt-2">
+          <p style="color: #888">
+            Already have an account?
+            <a href="/login.html" style="color: #0088ff">Login here</a>
+          </p>
+          <p style="color: #888">
+            <a href="/" style="color: #0088ff">← Back to home</a>
+          </p>
+        </div>
+
+        <div class="alert alert-info" style="margin-top: 2rem">
+          <strong>💡 Note:</strong> New accounts start with "Technician" role.
+          You'll need to escalate privileges to access advanced features!
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("registerForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const username = document.getElementById("username").value;
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          const messageDiv = document.getElementById("message");
+
+          if (password.length < 8) {
+            messageDiv.innerHTML =
+              '<div class="alert alert-error">❌ Password must be at least 8 characters</div>';
+            return;
+          }
+
+          messageDiv.innerHTML =
+            '<div class="alert alert-info">Creating account...</div>';
+
+          try {
+            const response = await fetch("/api/auth/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, email, password }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("user", JSON.stringify(data.user));
+              messageDiv.innerHTML =
+                '<div class="alert alert-success">✅ Account created! Redirecting...</div>';
+              setTimeout(() => (window.location.href = "/feed.html"), 1000);
+            } else {
+              messageDiv.innerHTML = `<div class="alert alert-error">❌ ${data.error}</div>`;
+            }
+          } catch (err) {
+            messageDiv.innerHTML =
+              '<div class="alert alert-error">❌ Registration failed. Please try again.</div>';
+            console.error(err);
+          }
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Git
+.git
+.gitignore
+
+# Documentation and CTF solution files
+*.md
+README.md
+SOLUTION.md
+EXPLOIT_CHAIN.md
+COOKIE_AUTH_UPDATE.md
+2FA_UPDATE.md
+BUILD_SUMMARY.md
+QUICKSTART.md
+FINAL_STATUS.md
+UI_ENHANCEMENTS.md
+NO_HINTS_COMPLETE.md
+CHANGES.md
+context.md
+checklist.md
+security.md
+
+# Environment and config
+.env
+.env.*
+
+# Scripts
+test-setup.sh
+restart.bat
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore

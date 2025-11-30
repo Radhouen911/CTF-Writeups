@@ -494,11 +494,4 @@ This challenge demonstrates:
 
 ---
 
-## Credits
-
-Challenge created for CTF competition  
-Theme: Mega Man / Robot Masters  
-Difficulty: Medium  
-Estimated solve time: 2-4 hours
-
 🎮 **Game Over - You Win!** 🎮
